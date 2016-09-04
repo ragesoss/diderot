@@ -2,6 +2,22 @@
 var rocky = require('rocky');
 
 var article;
+var displayTime;
+
+rocky.on('minutechange', function(event) {
+  setTime();
+  // Request the screen to be redrawn on next pass
+  rocky.requestDraw();
+  rocky.postMessage({ getNearby: true });
+});
+
+rocky.on('message', function(event) {
+  var message = event.data;
+  if (message.article) {
+    article = message.article;
+  }
+  rocky.requestDraw();
+});
 
 rocky.on('draw', function(event) {
   // Get the CanvasRenderingContext2D object
@@ -14,36 +30,35 @@ rocky.on('draw', function(event) {
   var w = ctx.canvas.unobstructedWidth;
   var h = ctx.canvas.unobstructedHeight;
 
-  // Current date/time
-  var d = new Date();
-
   // Set the text color
-  ctx.fillStyle = 'white';
-
+  ctx.fillStyle = 'green';
   // Center align the text
   ctx.textAlign = 'center';
 
+  ctx.font = '30px bolder Bitham';  
   // Display the time, in the middle of the screen
-  ctx.fillText(d.toLocaleTimeString(), w / 2, h / 6, w);
+  ctx.fillText(displayTime, w / 2, h / 6, w);
 
+  ctx.fillStyle = 'yellow';
+  ctx.font = '21px Roboto';
   if (article) {
     ctx.fillText(article, w / 2, h / 2, w);
   }
 });
 
-rocky.on('minutechange', function(event) {
-  // Request the screen to be redrawn on next pass
-  rocky.requestDraw();
-  rocky.postMessage({ getNearby: true });
-  // Display a message in the system logs
-  console.log("ohai");
-});
-
-rocky.on('message', function(event) {
-  var message = event.data;
-  if (message.article) {
-    article = message.article;
+// Get the current time and set the global displayTime string
+function setTime() {
+  var tickTime = new Date();
+  var hours = tickTime.getHours();
+  var ampm = 'am';
+  if (hours > 12) {
+    hours = hours - 12;
+    ampm = 'pm';
   }
-  rocky.requestDraw();
-});
-
+  var minutes = tickTime.getMinutes();
+  if (minutes < 10) {
+    minutes = '0' + minutes;
+  }
+  
+  displayTime = hours + ':' + minutes + ' ' + ampm;
+}
