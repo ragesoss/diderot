@@ -1,0 +1,30 @@
+{
+    "author": "ragesoss@gmail.com",
+    "dependencies": {},
+    "keywords": [],
+    "name": "diderot-rocky.js",
+    "pebble": {
+        "capabilities": [
+            "location",
+            "configurable"
+        ],
+        "displayName": "Diderot rocky.js",
+        "enableMultiJS": true,
+        "messageKeys": [],
+        "projectType": "rocky",
+        "resources": {
+            "media": []
+        },
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "basalt",
+            "chalk",
+            "diorite"
+        ],
+        "uuid": "13994745-1b9d-4349-b090-90981adecc80",
+        "watchapp": {
+            "watchface": true
+        }
+    },
+    "version": "1.0.0"
+}
