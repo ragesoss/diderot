@@ -24,14 +24,15 @@ rocky.on('draw', function(event) {
   var ctx = event.context;
 
   // Clear the screen
-  ctx.clearRect(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight);
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight);
 
   // Determine the width and height of the display
   var w = ctx.canvas.unobstructedWidth;
   var h = ctx.canvas.unobstructedHeight;
 
   // Set the text color
-  ctx.fillStyle = 'green';
+  ctx.fillStyle = '#3333ff';
   // Center align the text
   ctx.textAlign = 'center';
 
@@ -39,7 +40,7 @@ rocky.on('draw', function(event) {
   // Display the time, in the middle of the screen
   ctx.fillText(displayTime, w / 2, h / 6, w);
 
-  ctx.fillStyle = 'yellow';
+  ctx.fillStyle = 'black';
   ctx.font = '21px Roboto';
   if (article) {
     ctx.fillText(article, w / 2, h / 2, w);

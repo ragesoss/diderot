@@ -18,26 +18,22 @@ function locationError(err) {
 }
 function locationSuccess(pos) {
   var coordinates = pos.coords;
-  fetchNearby(coordinates.latitude, coordinates.longitude);
+  fetchNearbyUnillustrated(coordinates.latitude, coordinates.longitude);
 }
 
 function initiateUpdateNearby() {
   window.navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
 }
-function fetchNearby(latitude, longitude) {
+
+// http://tools.wmflabs.org/articles-by-lat-lon-without-images/index.php?wiki=sv&lat=59.06708056&lon=16.36239722&radius=10000
+function fetchNearbyUnillustrated(latitude, longitude) {
   var radius = 10000;
-  var articleLimit = 10;
-  var url = 'https://en.wikipedia.org/w/api.php?action=query' +
-            '&prop=coordinates|pageimages|pageterms' +
-            '&generator=geosearch' +
-            '&ggscoord=' + latitude + '|' + longitude +
-            '&ggsradius=' + radius +
-            '&ggslimit=' + articleLimit +
-            'piprop=thumbnail' +
-            'pilimit=' + articleLimit +
-            'colimit=' + articleLimit +
-            'wbptterms=description' +
-            '&format=json';
+  var url = 'http://tools.wmflabs.org/articles-by-lat-lon-without-images/index.php' +
+            '?wiki=en' +
+            '&lat=' + latitude +
+            '&lon=' + longitude +
+            '&radius=' + radius +
+            '&reencode=true';
   console.log(url);
   var req = new XMLHttpRequest();
   req.open('GET', url, false);
@@ -46,34 +42,14 @@ function fetchNearby(latitude, longitude) {
       if (req.status === 200) {
         console.log(req.responseText);
         var response = JSON.parse(req.responseText);
-        console.log(response.query.pages);
-        var nearest = nearestUnillustrated(response.query.pages);
-        sendNearestToPebble(nearest);
+        console.log(response.response);
+        sendNearestToPebble(response[0]);
       } else {
         console.log('Error');
       }
     }
   };
   req.send(null);
-}
-
-function nearestUnillustrated(pages) {
-  for (var page in pages) {
-    if (pages.hasOwnProperty(page)) {
-      var index = pages[page].index;
-      console.log(index);
-      if (pages[page].thumbnail) {
-        continue;
-      } else {
-        var nearest = {
-          title: pages[page].title,
-          description: pages[page].terms.description
-        };
-        console.log(pages[page].title);
-        return nearest;
-      }
-    }
-  }
 }
 
 function sendNearestToPebble(article) {
