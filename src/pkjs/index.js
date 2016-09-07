@@ -59,15 +59,17 @@ function sendNearestToPebble(article, isNew) {
   });
 }
 
-// Add the article to 
+// Add the article to local storage, if it's not there yet
+// Send the articl to Pebble, along with its isNew status
+// Create a notification if it's new.
 function notifyIfNew(article) {
   var title = article.title;
   var storedItem = localStorage.getItem(title);
   console.log(storedItem);
   if (!storedItem) {
     sendNearestToPebble(article, true);
-    Pebble.showSimpleNotificationOnPebble(title, 'NEW!');
     localStorage.setItem(title, 'true');
+    Pebble.showSimpleNotificationOnPebble(title, 'NEW!');
   } else {
     console.log('already done!');
     sendNearestToPebble(article, false);
