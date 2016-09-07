@@ -43,7 +43,7 @@ function fetchNearbyUnillustrated(latitude, longitude) {
         console.log(req.responseText);
         var response = JSON.parse(req.responseText);
         console.log(response.response);
-        sendNearestToPebble(response[0]);
+        notifyIfNew(response[0]);
       } else {
         console.log('Error');
       }
@@ -52,8 +52,24 @@ function fetchNearbyUnillustrated(latitude, longitude) {
   req.send(null);
 }
 
-function sendNearestToPebble(article) {
+function sendNearestToPebble(article, isNew) {
   Pebble.postMessage({
-    article: article.title
+    article: article.title,
+    isNew: isNew
   });
+}
+
+// Add the article to 
+function notifyIfNew(article) {
+  var title = article.title;
+  var storedItem = localStorage.getItem(title);
+  console.log(storedItem);
+  if (!storedItem) {
+    sendNearestToPebble(article, true);
+    Pebble.showSimpleNotificationOnPebble(title, 'NEW!');
+    localStorage.setItem(title, 'true');
+  } else {
+    console.log('already done!');
+    sendNearestToPebble(article, false);
+  }
 }

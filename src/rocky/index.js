@@ -2,6 +2,7 @@
 var rocky = require('rocky');
 
 var article;
+var isNew;
 var displayTime;
 
 rocky.on('minutechange', function(event) {
@@ -15,6 +16,7 @@ rocky.on('message', function(event) {
   var message = event.data;
   if (message.article) {
     article = message.article;
+    isNew = message.isNew;
   }
   rocky.requestDraw();
 });
@@ -42,8 +44,12 @@ rocky.on('draw', function(event) {
 
   ctx.fillStyle = 'black';
   ctx.font = '21px Roboto';
+  var displayArticle = article;
+  if (isNew === true) {
+    displayArticle += ' (NEW!)';
+  }
   if (article) {
-    ctx.fillText(article, w / 2, h / 2, w);
+    ctx.fillText(displayArticle, w / 2, h / 2, w);
   }
 });
 
