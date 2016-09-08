@@ -1,4 +1,6 @@
 // On the phone, begin listening for a message from the smartwatch
+var myCoordinates;
+
 Pebble.on('message', function(event) {
   // Get the message that was passed
   console.log(JSON.stringify(event.data));
@@ -17,8 +19,8 @@ function locationError(err) {
   console.warn('location error (' + err.code + '): ' + err.message);
 }
 function locationSuccess(pos) {
-  var coordinates = pos.coords;
-  fetchNearbyUnillustrated(coordinates.latitude, coordinates.longitude);
+  myCoordinates = pos.coords;
+  fetchNearbyUnillustrated(myCoordinates.latitude, myCoordinates.longitude);
 }
 
 function initiateUpdateNearby() {
@@ -40,9 +42,8 @@ function fetchNearbyUnillustrated(latitude, longitude) {
   req.onload = function () {
     if (req.readyState === 4) {
       if (req.status === 200) {
-        console.log(req.responseText);
+        console.log(req.responseText)
         var response = JSON.parse(req.responseText);
-        console.log(response.response);
         notifyIfNew(response[0]);
       } else {
         console.log('Error');
@@ -53,9 +54,15 @@ function fetchNearbyUnillustrated(latitude, longitude) {
 }
 
 function sendNearestToPebble(article, isNew) {
+  var articleCoordinates = {
+    latitude: article.lat,
+    longitude: article.lon
+  };
+  var kilometersAway = haversine(myCoordinates, articleCoordinates, { unit: 'km' });
   Pebble.postMessage({
     article: article.title,
-    isNew: isNew
+    isNew: isNew,
+    kilometersAway: kilometersAway.toFixed(1)
   });
 }
 
@@ -75,3 +82,38 @@ function notifyIfNew(article) {
     sendNearestToPebble(article, false);
   }
 }
+
+// haversine formula for calculating distance between coordinates
+// adapted from https://github.com/njj/haversine/blob/master/haversine.js
+function toRadians(degrees) {
+  return (degrees * Math.PI / 180);
+}
+
+function haversine(start, end, options) {
+  options = options || {};
+
+  var radii = {
+    km:    6371,
+    mile:  3960,
+    meter: 6371000
+  };
+
+  var R = options.unit in radii ? radii[options.unit] : radii.km;
+
+  var dLat = toRadians(end.latitude - start.latitude);
+  var dLon = toRadians(end.longitude - start.longitude);
+  var lat1 = toRadians(start.latitude);
+  var lat2 = toRadians(end.latitude);
+
+  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  if (options.threshold) {
+    return options.threshold > (R * c);
+  }
+
+  return R * c;
+}
+
+

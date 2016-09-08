@@ -4,6 +4,7 @@ var rocky = require('rocky');
 var article;
 var isNew;
 var displayTime;
+var kilometersAway;
 
 rocky.on('minutechange', function(event) {
   setTime();
@@ -17,6 +18,7 @@ rocky.on('message', function(event) {
   if (message.article) {
     article = message.article;
     isNew = message.isNew;
+    kilometersAway = message.kilometersAway;
   }
   rocky.requestDraw();
 });
@@ -44,7 +46,8 @@ rocky.on('draw', function(event) {
 
   ctx.fillStyle = 'black';
   ctx.font = '21px Roboto';
-  var displayArticle = article;
+  var displayArticle = article + ' (' + kilometersAway + ' km)';
+
   if (isNew === true) {
     displayArticle += ' (NEW!)';
   }
