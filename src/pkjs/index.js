@@ -1,5 +1,9 @@
+ // file: /src/pkjs/index.js
+
 // On the phone, begin listening for a message from the smartwatch
 var myCoordinates;
+var nearestArticle;
+var allNearbyArticles;
 
 Pebble.on('message', function(event) {
   // Get the message that was passed
@@ -44,7 +48,8 @@ function fetchNearbyUnillustrated(latitude, longitude) {
       if (req.status === 200) {
         console.log(req.responseText)
         var response = JSON.parse(req.responseText);
-        notifyIfNew(response[0]);
+        processNearbyArticles(response)
+        // notifyIfNew(response[0]);
       } else {
         console.log('Error');
       }
@@ -53,16 +58,35 @@ function fetchNearbyUnillustrated(latitude, longitude) {
   req.send(null);
 }
 
+function processNearbyArticles(articles) {
+  articles = articles.map( function(article) {
+    var articleCoordinates = {
+      latitude: article.lat,
+      longitude: article.lon
+    };
+    article.distanceAway = haversine(myCoordinates, articleCoordinates, { unit: 'km' });
+    return article;
+  });
+
+  nearestArticle = articles[0];
+  allNearbyArticles = articles;
+
+  articles.forEach( function(article) {
+    if (article.distanceAway <= nearestArticle.distanceAway) {
+      nearestArticle = article;
+      console.log(nearestArticle.title);
+      console.log(nearestArticle.distanceAway);
+    }
+  });
+  console.log(nearestArticle.title);
+  notifyIfNew(nearestArticle);
+}
+
 function sendNearestToPebble(article, isNew) {
-  var articleCoordinates = {
-    latitude: article.lat,
-    longitude: article.lon
-  };
-  var kilometersAway = haversine(myCoordinates, articleCoordinates, { unit: 'km' });
   Pebble.postMessage({
     article: article.title,
     isNew: isNew,
-    kilometersAway: kilometersAway.toFixed(1)
+    kilometersAway: article.distanceAway.toFixed(1)
   });
 }
 
@@ -115,5 +139,3 @@ function haversine(start, end, options) {
 
   return R * c;
 }
-
-
