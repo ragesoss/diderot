@@ -6,6 +6,8 @@ var isNew;
 var displayTime;
 var kilometersAway;
 
+// Main update event. Redraw with the new time,
+// Then request an update of the nearby article.
 rocky.on('minutechange', function(event) {
   setTime();
   // Request the screen to be redrawn on next pass
@@ -13,14 +15,17 @@ rocky.on('minutechange', function(event) {
   rocky.postMessage({ getNearby: true });
 });
 
+// Handle messages from pebblekit.js
+// Redraw when a nearby article is received.
 rocky.on('message', function(event) {
   var message = event.data;
   if (message.article) {
     article = message.article;
     isNew = message.isNew;
     kilometersAway = message.kilometersAway;
+
+    rocky.requestDraw();
   }
-  rocky.requestDraw();
 });
 
 rocky.on('draw', function(event) {
@@ -57,6 +62,7 @@ rocky.on('draw', function(event) {
 });
 
 // Get the current time and set the global displayTime string
+// Format: 8:33 pm
 function setTime() {
   var tickTime = new Date();
   var hours = tickTime.getHours();

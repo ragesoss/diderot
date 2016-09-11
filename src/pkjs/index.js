@@ -1,10 +1,7 @@
  // file: /src/pkjs/index.js
+/* globals Pebble, XMLHttpRequest, window, localStorage */
 
 // On the phone, begin listening for a message from the smartwatch
-var myCoordinates;
-var nearestArticle;
-var allNearbyArticles;
-
 Pebble.on('message', function(event) {
   // Get the message that was passed
   console.log(JSON.stringify(event.data));
@@ -14,11 +11,23 @@ Pebble.on('message', function(event) {
   }
 });
 
+// Send an article for the Pebble to display
+function sendArticleToPebble(article, isNew) {
+  Pebble.postMessage({
+    article: article.title,
+    isNew: isNew,
+    kilometersAway: article.distanceAway.toFixed(1)
+  });
+}
+
+
+// Get location via standard geolocation API, and initiate
+// search for Wikipedia articles upon success.
+var myCoordinates;
 var locationOptions = {
   'timeout': 15000,
   'maximumAge': 60000
 };
-
 function locationError(err) {
   console.warn('location error (' + err.code + '): ' + err.message);
 }
@@ -26,7 +35,6 @@ function locationSuccess(pos) {
   myCoordinates = pos.coords;
   fetchNearbyUnillustrated(myCoordinates.latitude, myCoordinates.longitude);
 }
-
 function initiateUpdateNearby() {
   window.navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
 }
@@ -46,9 +54,9 @@ function fetchNearbyUnillustrated(latitude, longitude) {
   req.onload = function () {
     if (req.readyState === 4) {
       if (req.status === 200) {
-        console.log(req.responseText)
+        console.log(req.responseText);
         var response = JSON.parse(req.responseText);
-        processNearbyArticles(response)
+        processNearbyArticles(response);
         // notifyIfNew(response[0]);
       } else {
         console.log('Error');
@@ -58,6 +66,10 @@ function fetchNearbyUnillustrated(latitude, longitude) {
   req.send(null);
 }
 
+// Calculate the distanceAway for each nearby article and find the nearest.
+// Results from the wmflabs tool are not ordered by proximity.
+var nearestArticle;
+var allNearbyArticles;
 function processNearbyArticles(articles) {
   articles = articles.map( function(article) {
     var articleCoordinates = {
@@ -79,31 +91,23 @@ function processNearbyArticles(articles) {
     }
   });
   console.log(nearestArticle.title);
-  notifyIfNew(nearestArticle);
+  updateNearest(nearestArticle);
 }
 
-function sendNearestToPebble(article, isNew) {
-  Pebble.postMessage({
-    article: article.title,
-    isNew: isNew,
-    kilometersAway: article.distanceAway.toFixed(1)
-  });
-}
-
-// Add the article to local storage, if it's not there yet
-// Send the articl to Pebble, along with its isNew status
+// Add the article to local storage, if it's not there yet.
+// Send the article to Pebble, along with its isNew status.
 // Create a notification if it's new.
-function notifyIfNew(article) {
+function updateNearest(article) {
   var title = article.title;
   var storedItem = localStorage.getItem(title);
   console.log(storedItem);
   if (!storedItem) {
-    sendNearestToPebble(article, true);
+    sendArticleToPebble(article, true);
     localStorage.setItem(title, 'true');
-    Pebble.showSimpleNotificationOnPebble(title, 'NEW!');
+    Pebble.showSimpleNotificationOnPebble(title, 'NEW!'); // Does not work yet on Rocky.js
   } else {
     console.log('already done!');
-    sendNearestToPebble(article, false);
+    sendArticleToPebble(article, false);
   }
 }
 
