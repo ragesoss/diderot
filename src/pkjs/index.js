@@ -16,7 +16,8 @@ function sendArticleToPebble(article, isNew) {
   Pebble.postMessage({
     article: article.title,
     isNew: isNew,
-    kilometersAway: article.distanceAway.toFixed(1)
+    kilometersAway: article.distanceAway.toFixed(1),
+    compassDirection: article.compassDirection
   });
 }
 
@@ -90,6 +91,7 @@ function processNearbyArticles(articles) {
       console.log(nearestArticle.distanceAway);
     }
   });
+  nearestArticle.compassDirection = compassDirection(myCoordinates, nearestArticle);
   console.log(nearestArticle.title);
   updateNearest(nearestArticle);
 }
@@ -117,6 +119,10 @@ function toRadians(degrees) {
   return (degrees * Math.PI / 180);
 }
 
+function toDegrees(radians) {
+  return radians * (180 / Math.PI);
+}
+
 function haversine(start, end, options) {
   options = options || {};
 
@@ -142,4 +148,59 @@ function haversine(start, end, options) {
   }
 
   return R * c;
+}
+
+// Determine what direction an article is in
+function compassDirection(currentLocation, article) {
+  var startLat = toRadians(currentLocation.latitude);
+  var startLong = toRadians(currentLocation.longitude);
+  var endLat = toRadians(article.lat);
+  var endLong = toRadians(article.lon);
+
+  var dLong = endLong - startLong;
+
+  var dPhi = Math.log(Math.tan(endLat/2.0+Math.PI/4.0)/Math.tan(startLat/2.0+Math.PI/4.0));
+  if (Math.abs(dLong) > Math.PI){
+    if (dLong > 0.0)
+       dLong = -(2.0 * Math.PI - dLong);
+    else
+       dLong = (2.0 * Math.PI + dLong);
+  }
+  var degrees = (toDegrees(Math.atan2(dLong, dPhi)) + 360.0) % 360.0;
+  switch (true) {
+    case degrees <= 11.25:
+      return 'N';
+    case degrees <= 33.75:
+      return 'NNE';
+    case degrees <= 56.25:
+      return 'NE';
+    case degrees <= 78.75:
+      return 'ENE';
+    case degrees <= 101.25:
+      return 'E';
+    case degrees <= 123.75:
+      return 'ESE';
+    case degrees <= 146.25:
+      return 'SE';
+    case degrees <= 168.75:
+      return 'SSE';
+    case degrees <= 191.25:
+      return 'S';
+    case degrees <= 213.75:
+      return 'SSW';
+    case degrees <= 236.25:
+      return 'SW';
+    case degrees <= 258.75:
+      return 'WSW';
+    case degrees <= 281.25:
+      return 'W';
+    case degrees <= 303.75:
+      return 'WNW';
+    case degrees <= 326.25:
+      return 'NW';
+    case degrees <= 348.75:
+      return 'NNW';
+    case degrees <= 360:
+      return 'N';
+  }
 }

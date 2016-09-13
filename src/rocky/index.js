@@ -5,6 +5,7 @@ var article;
 var isNew;
 var displayTime;
 var kilometersAway;
+var compassDirection;
 
 // Main update event. Redraw with the new time,
 // Then request an update of the nearby article.
@@ -23,6 +24,7 @@ rocky.on('message', function(event) {
     article = message.article;
     isNew = message.isNew;
     kilometersAway = message.kilometersAway;
+    compassDirection = message.compassDirection;
 
     rocky.requestDraw();
   }
@@ -51,7 +53,7 @@ rocky.on('draw', function(event) {
 
   ctx.fillStyle = 'black';
   ctx.font = '21px Roboto';
-  var displayArticle = article + ' (' + kilometersAway + ' km)';
+  var displayArticle = article + ' (' + kilometersAway + ' km ' + compassDirection + ')';
 
   if (isNew === true) {
     displayArticle += ' (NEW!)';
