@@ -9,16 +9,13 @@ Pebble.addEventListener('ready', function(event) {
 // On the phone, begin listening for a message from the smartwatch
 Pebble.addEventListener('appmessage', function(event) {
   // Get the message that was passed
-  console.log(JSON.stringify(event.data));
-  var message = event.data;
-  if (message.getNearby) {
-    initiateUpdateNearby();
-  }
+  console.log('appMessage received');
+  initiateUpdateNearby();
 });
 
 // Send an article for the Pebble to display
 function sendArticleToPebble(article) {
-  var distanceString = article.distanceAway.toFixed(1) + ' km ' + article.compassDirection
+  var distanceString = article.distanceAway.toFixed(1) + ' km ' + article.compassDirection;
   Pebble.sendAppMessage({
     ARTICLE: article.title,
     DISTANCE: distanceString
