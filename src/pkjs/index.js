@@ -1,8 +1,13 @@
  // file: /src/pkjs/index.js
 /* globals Pebble, XMLHttpRequest, window, localStorage */
 
+// Listen for when the watchface is opened
+Pebble.addEventListener('ready', function(event) {
+  initiateUpdateNearby();
+});
+
 // On the phone, begin listening for a message from the smartwatch
-Pebble.on('message', function(event) {
+Pebble.addEventListener('appmessage', function(event) {
   // Get the message that was passed
   console.log(JSON.stringify(event.data));
   var message = event.data;
@@ -12,12 +17,17 @@ Pebble.on('message', function(event) {
 });
 
 // Send an article for the Pebble to display
-function sendArticleToPebble(article, isNew) {
-  Pebble.postMessage({
-    article: article.title,
-    isNew: isNew,
-    kilometersAway: article.distanceAway.toFixed(1),
-    compassDirection: article.compassDirection
+function sendArticleToPebble(article) {
+  var distanceString = article.distanceAway.toFixed(1) + ' km ' + article.compassDirection
+  Pebble.sendAppMessage({
+    ARTICLE: article.title,
+    DISTANCE: distanceString
+  },
+  function(e) {
+    console.log('Article info sent to Pebble successfully!');
+  },
+  function(e) {
+    console.log('Error sending article info to Pebble!');
   });
 }
 
@@ -150,7 +160,8 @@ function haversine(start, end, options) {
   return R * c;
 }
 
-// Determine what direction an article is in
+// Determine what direction an article is in from the current location
+// based on 16-wind compass.
 function compassDirection(currentLocation, article) {
   var startLat = toRadians(currentLocation.latitude);
   var startLong = toRadians(currentLocation.longitude);

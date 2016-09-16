@@ -2,26 +2,30 @@
     "author": "ragesoss@gmail.com",
     "dependencies": {},
     "keywords": [],
-    "name": "diderot-rocky.js",
+    "name": "diderot-c",
     "pebble": {
         "capabilities": [
             "location",
             "configurable"
         ],
-        "displayName": "Diderot rocky.js",
+        "displayName": "Diderot C",
         "enableMultiJS": true,
-        "messageKeys": [],
-        "projectType": "rocky",
+        "messageKeys": {
+            "ARTICLE": 0,
+            "DISTANCE": 2,
+            "IS_NEW": 1
+        },
+        "projectType": "native",
         "resources": {
             "media": []
         },
         "sdkVersion": "3",
         "targetPlatforms": [
+            "aplite",
             "basalt",
-            "chalk",
-            "diorite"
+            "chalk"
         ],
-        "uuid": "13994745-1b9d-4349-b090-90981adecc80",
+        "uuid": "752681f3-e884-4ab9-90fe-aa29ea29bb1a",
         "watchapp": {
             "watchface": true
         }
