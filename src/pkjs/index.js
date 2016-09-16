@@ -116,7 +116,7 @@ function updateNearest(article) {
   if (!storedItem) {
     sendArticleToPebble(article, true);
     localStorage.setItem(title, 'true');
-    Pebble.showSimpleNotificationOnPebble(title, 'NEW!'); // Does not work yet on Rocky.js
+    Pebble.showSimpleNotificationOnPebble(title, "You're near a new unphotographed place. Go take a picture!");
   } else {
     console.log('already done!');
     sendArticleToPebble(article, false);

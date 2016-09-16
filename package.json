@@ -5,8 +5,7 @@
     "name": "diderot-c",
     "pebble": {
         "capabilities": [
-            "location",
-            "configurable"
+            "location"
         ],
         "displayName": "Diderot C",
         "enableMultiJS": true,
@@ -23,7 +22,8 @@
         "targetPlatforms": [
             "aplite",
             "basalt",
-            "chalk"
+            "chalk",
+            "diorite"
         ],
         "uuid": "752681f3-e884-4ab9-90fe-aa29ea29bb1a",
         "watchapp": {
