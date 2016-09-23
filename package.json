@@ -1,19 +1,23 @@
 {
     "author": "ragesoss@gmail.com",
-    "dependencies": {},
+    "dependencies": {
+        "pebble-clay": "^1.0.0"
+    },
     "keywords": [],
-    "name": "diderot-c",
+    "name": "diderot",
     "pebble": {
         "capabilities": [
-            "location"
+            "location",
+            "configurable"
         ],
-        "displayName": "Diderot C",
+        "displayName": "Diderot ",
         "enableMultiJS": true,
-        "messageKeys": {
-            "ARTICLE": 0,
-            "DISTANCE": 2,
-            "IS_NEW": 1
-        },
+        "messageKeys": [
+            "ARTICLE",
+            "IS_NEW",
+            "DISTANCE",
+            "UNITS"
+        ],
         "projectType": "native",
         "resources": {
             "media": []

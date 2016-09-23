@@ -1,9 +1,5 @@
 #include <pebble.h>
 
-#define ARTICLE 0
-#define IS_NEW 1
-#define DISTANCE 2
-
 static Window *s_main_window;
 static TextLayer *s_time_layer;
 static TextLayer *s_nearest_article_layer;
@@ -53,7 +49,7 @@ static void main_window_load(Window *window) {
   
   // Improve the layout to be more like a watchface
   text_layer_set_background_color(s_time_layer, GColorClear);
-  text_layer_set_text_color(s_time_layer, GColorVeryLightBlue);
+  text_layer_set_text_color(s_time_layer, GColorLiberty);
   text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK));
   text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
 
@@ -98,8 +94,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   //static char new_buffer[8];
   static char distance_buffer[32];
 
-  Tuple *article_tuple = dict_find(iterator, ARTICLE);
-  Tuple *distance_tuple = dict_find(iterator, DISTANCE);
+  Tuple *article_tuple = dict_find(iterator, MESSAGE_KEY_ARTICLE);
+  Tuple *distance_tuple = dict_find(iterator, MESSAGE_KEY_DISTANCE);
 
   if(article_tuple && distance_tuple) {
     snprintf(article_buffer, sizeof(article_buffer), "%s", article_tuple->value->cstring);

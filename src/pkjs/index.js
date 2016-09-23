@@ -1,5 +1,21 @@
  // file: /src/pkjs/index.js
 /* globals Pebble, XMLHttpRequest, window, localStorage */
+var Clay = require('pebble-clay');
+var clayConfig = require('./config');
+var clay = new Clay(clayConfig);
+
+Pebble.addEventListener('webviewclosed', function(e) {
+  if (e && !e.response) {
+    return;
+  }
+
+  // Get the new settings and set them in localStorage
+  var settings = clay.getSettings(e.response, false);
+  localStorage.setItem('units', settings.UNITS.value);
+  console.log('Settings updated!');
+  initiateUpdateNearby();
+});
+  
 
 // Listen for when the watchface is opened
 Pebble.addEventListener('ready', function(event) {
@@ -12,21 +28,6 @@ Pebble.addEventListener('appmessage', function(event) {
   console.log('appMessage received');
   initiateUpdateNearby();
 });
-
-// Send an article for the Pebble to display
-function sendArticleToPebble(article) {
-  var distanceString = article.distanceAway.toFixed(1) + ' km ' + article.compassDirection;
-  Pebble.sendAppMessage({
-    ARTICLE: article.title,
-    DISTANCE: distanceString
-  },
-  function(e) {
-    console.log('Article info sent to Pebble successfully!');
-  },
-  function(e) {
-    console.log('Error sending article info to Pebble!');
-  });
-}
 
 
 // Get location via standard geolocation API, and initiate
@@ -65,7 +66,6 @@ function fetchNearbyUnillustrated(latitude, longitude) {
         console.log(req.responseText);
         var response = JSON.parse(req.responseText);
         processNearbyArticles(response);
-        // notifyIfNew(response[0]);
       } else {
         console.log('Error');
       }
@@ -78,13 +78,16 @@ function fetchNearbyUnillustrated(latitude, longitude) {
 // Results from the wmflabs tool are not ordered by proximity.
 var nearestArticle;
 var allNearbyArticles;
+var units;
 function processNearbyArticles(articles) {
+  units = localStorage.getItem('units') || 'km';
+
   articles = articles.map( function(article) {
     var articleCoordinates = {
       latitude: article.lat,
       longitude: article.lon
     };
-    article.distanceAway = haversine(myCoordinates, articleCoordinates, { unit: 'km' });
+    article.distanceAway = haversine(myCoordinates, articleCoordinates, { unit: units });
     return article;
   });
 
@@ -119,6 +122,28 @@ function updateNearest(article) {
     sendArticleToPebble(article, false);
   }
 }
+
+// Send an article for the Pebble to display
+function sendArticleToPebble(article) {
+  
+  var unitString = ' km ';
+  if (units == 'mile') {
+    unitString = ' mi ';
+  }
+  var distanceString = article.distanceAway.toFixed(1) + unitString + article.compassDirection;
+  Pebble.sendAppMessage({
+    ARTICLE: article.title,
+    DISTANCE: distanceString
+  },
+  function(e) {
+    console.log('Article info sent to Pebble successfully!');
+  },
+  function(e) {
+    console.log('Error sending article info to Pebble!');
+  });
+}
+
+
 
 // haversine formula for calculating distance between coordinates
 // adapted from https://github.com/njj/haversine/blob/master/haversine.js
