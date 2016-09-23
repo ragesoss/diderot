@@ -16,7 +16,8 @@
             "ARTICLE",
             "IS_NEW",
             "DISTANCE",
-            "UNITS"
+            "UNITS",
+            "WIKI"
         ],
         "projectType": "native",
         "resources": {

@@ -12,6 +12,7 @@ Pebble.addEventListener('webviewclosed', function(e) {
   // Get the new settings and set them in localStorage
   var settings = clay.getSettings(e.response, false);
   localStorage.setItem('units', settings.UNITS.value);
+  localStorage.setItem('language', settings.WIKI.value);
   console.log('Settings updated!');
   initiateUpdateNearby();
 });
@@ -49,15 +50,18 @@ function initiateUpdateNearby() {
 }
 
 // http://tools.wmflabs.org/articles-by-lat-lon-without-images/index.php?wiki=sv&lat=59.06708056&lon=16.36239722&radius=10000
+var language;
 function fetchNearbyUnillustrated(latitude, longitude) {
+  language = localStorage.getItem('language') || 'en';
   var radius = 10000;
   var url = 'http://tools.wmflabs.org/articles-by-lat-lon-without-images/index.php' +
-            '?wiki=en' +
+            '?wiki=' + language +
             '&lat=' + latitude +
             '&lon=' + longitude +
             '&radius=' + radius +
             '&reencode=true';
   console.log(url);
+  // url = 'http://tools.wmflabs.org/articles-by-lat-lon-without-images/index.php?wiki=sv&lat=59.06708056&lon=16.36239722&radius=10000&reencode=true';
   var req = new XMLHttpRequest();
   req.open('GET', url, false);
   req.onload = function () {
