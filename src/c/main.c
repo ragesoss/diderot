@@ -58,7 +58,7 @@ static void main_window_load(Window *window) {
 
   // Create nearest_article layer and add it
   s_nearest_article_layer = text_layer_create(
-      GRect(0, PBL_IF_ROUND_ELSE(65, 60), bounds.size.w, 50));
+      GRect(0, PBL_IF_ROUND_ELSE(65, 60), bounds.size.w, 80));
   text_layer_set_background_color(s_nearest_article_layer, GColorClear);
   text_layer_set_text_color(s_nearest_article_layer, GColorBlack);
   text_layer_set_font(s_nearest_article_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
