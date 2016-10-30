@@ -84,6 +84,14 @@ var nearestArticle;
 var allNearbyArticles;
 var units;
 function processNearbyArticles(articles) {
+  if (articles.length === 0) {
+    console.log('nothing nearby!');
+    Pebble.sendAppMessage({
+      ARTICLE: '',
+      DISTANCE: ''
+    });
+    return;
+  }
   units = localStorage.getItem('units') || 'km';
 
   articles = articles.map( function(article) {
