@@ -87,7 +87,7 @@ function processNearbyArticles(articles) {
   if (articles.length === 0) {
     console.log('nothing nearby!');
     Pebble.sendAppMessage({
-      ARTICLE: '',
+      ARTICLE: '—nothing nearby—',
       DISTANCE: ''
     });
     return;
