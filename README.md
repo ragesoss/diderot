@@ -1,5 +1,5 @@
 # diderot
-App for the [Pebble](https://www.pebble.com/) smartwatch that displays [nearby Wikipedia articles that need photos](https://github.com/Abbe98/articles-by-lat-lon-without-images-service).
+Watchface for the [Pebble](https://www.pebble.com/) smartwatch that displays [nearby Wikipedia articles that need photos](https://github.com/Abbe98/articles-by-lat-lon-without-images-service).
 
 [Get it from the Pebble app store](https://apps.getpebble.com/en_US/application/57dc94602a6ea665510000f0).
 
