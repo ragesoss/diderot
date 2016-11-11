@@ -28,6 +28,18 @@ module.exports = [
     "type": "section",
     "items": [
       {
+        "type": "color",
+        "messageKey": "TIME_COLOR",
+        "defaultValue": "ff0000",
+        "label": "Time Color",
+        "sunlight": true
+      },
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
         "type": "select",
         "messageKey": "WIKI",
         "label": "Wikipedia language",

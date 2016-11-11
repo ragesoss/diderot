@@ -17,7 +17,8 @@
             "IS_NEW",
             "DISTANCE",
             "UNITS",
-            "WIKI"
+            "WIKI",
+            "TIME_COLOR"
         ],
         "projectType": "native",
         "resources": {

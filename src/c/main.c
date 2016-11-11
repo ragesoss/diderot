@@ -1,10 +1,39 @@
 #include <pebble.h>
+#include "main.h"
 
 static Window *s_main_window;
 static TextLayer *s_time_layer;
 static TextLayer *s_nearest_article_layer;
 static TextLayer *s_distance_and_direction_layer;
 
+// A struct for our specific settings (see main.h)
+ClaySettings settings;
+
+// Initialize the default settings
+static void prv_default_settings() {
+  settings.TIME_COLOR = GColorLiberty;
+}
+
+// Read settings from persistent storage
+static void prv_load_settings() {
+  // Load the default settings
+  prv_default_settings();
+  // Read settings from persistent storage, if they exist
+  persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
+}
+
+// Save the settings to persistent storage
+static void prv_save_settings() {
+  persist_write_data(SETTINGS_KEY, &settings, sizeof(settings));
+  // Update the display based on new settings
+  prv_update_display();
+}
+
+// Update the display elements
+static void prv_update_display() {
+  // Time color
+  text_layer_set_text_color(s_time_layer, settings.TIME_COLOR);
+}
 
 static void update_time() {
   // Get a tm structure
@@ -49,7 +78,6 @@ static void main_window_load(Window *window) {
   
   // Improve the layout to be more like a watchface
   text_layer_set_background_color(s_time_layer, GColorClear);
-  text_layer_set_text_color(s_time_layer, GColorLiberty);
   text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK));
   text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
 
@@ -75,6 +103,9 @@ static void main_window_load(Window *window) {
   text_layer_set_text_alignment(s_distance_and_direction_layer, GTextAlignmentCenter);
   text_layer_set_text(s_distance_and_direction_layer, "");
   layer_add_child(window_layer, text_layer_get_layer(s_distance_and_direction_layer));
+
+  // Apply settings
+  prv_update_display();
 }
 
 static void main_window_unload(Window *window) {
@@ -103,6 +134,15 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     snprintf(distance_buffer, sizeof(distance_buffer), "%s", distance_tuple->value->cstring);
     text_layer_set_text(s_distance_and_direction_layer, distance_buffer);
   }
+
+  // Get TIME_COLOR setting
+  Tuple *time_color_t = dict_find(iterator, MESSAGE_KEY_TIME_COLOR);
+  if (time_color_t) {
+    settings.TIME_COLOR = GColorFromHEX(time_color_t->value->int32);
+  } 
+  // Save the new settings to persistent storage
+  prv_save_settings();
+
   APP_LOG(APP_LOG_LEVEL_INFO, "kthxbai!");
 }
 
@@ -122,6 +162,9 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
 // Main setup and teardown //
 /////////////////////////////
 static void init() {
+  // Load the settings
+  prv_load_settings();
+
   // Create main Window element and assign to pointer
   s_main_window = window_create();
   
