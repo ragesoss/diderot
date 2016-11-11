@@ -50,12 +50,19 @@ function initiateUpdateNearby() {
 }
 
 // http://tools.wmflabs.org/articles-by-lat-lon-without-images/index.php?wiki=sv&lat=59.06708056&lon=16.36239722&radius=10000
-var language;
-function fetchNearbyUnillustrated(latitude, longitude) {
-  language = localStorage.getItem('language') || 'en';
-  var radius = 10000;
+// http://tools.wmflabs.org/articles-by-lat-lon-without-images/index.php?wiki=wikidata&lat=58.1&lon=16.1&radius=1500&reencode=true
+var project;
+var radius;
+function fetchNearbyUnillustrated(latitude, longitude, useWikidata) {
+  if (useWikidata) {
+    project = 'wikidata';
+    radius = 10000;
+  } else {
+    project = localStorage.getItem('language') || 'en';
+    radius = 10000;
+  }
   var url = 'http://tools.wmflabs.org/articles-by-lat-lon-without-images/index.php' +
-            '?wiki=' + language +
+            '?wiki=' + project +
             '&lat=' + latitude +
             '&lon=' + longitude +
             '&radius=' + radius +
@@ -69,7 +76,7 @@ function fetchNearbyUnillustrated(latitude, longitude) {
       if (req.status === 200) {
         console.log(req.responseText);
         var response = JSON.parse(req.responseText);
-        processNearbyArticles(response);
+        handleApiResponse(response, latitude, longitude, useWikidata);
       } else {
         console.log('Error');
       }
@@ -78,12 +85,22 @@ function fetchNearbyUnillustrated(latitude, longitude) {
   req.send(null);
 }
 
+// If the response is empty from Wikipedia, try again with Wikidata.
+function handleApiResponse(response, latitude, longitude, isWikidata) {
+  if (response.length === 0 && !isWikidata) {
+    console.log('nothing nearby on Wikipedia; trying Wikidata');
+    fetchNearbyUnillustrated(latitude, longitude, true);
+  } else {
+    processNearbyArticles(response, isWikidata);
+  }
+}
+
 // Calculate the distanceAway for each nearby article and find the nearest.
 // Results from the wmflabs tool are not ordered by proximity.
 var nearestArticle;
 var allNearbyArticles;
 var units;
-function processNearbyArticles(articles) {
+function processNearbyArticles(articles, isWikidata) {
   if (articles.length === 0) {
     console.log('nothing nearby!');
     Pebble.sendAppMessage({
@@ -115,14 +132,18 @@ function processNearbyArticles(articles) {
   });
   nearestArticle.compassDirection = compassDirection(myCoordinates, nearestArticle);
   console.log(nearestArticle.title);
-  updateNearest(nearestArticle);
+  updateNearest(nearestArticle, isWikidata);
 }
 
 // Add the article to local storage, if it's not there yet.
 // Send the article to Pebble, along with its isNew status.
 // Create a notification if it's new.
-function updateNearest(article) {
+function updateNearest(article, isWikidata) {
   var title = article.title;
+  if (isWikidata) {
+    title += ' (Wikidata)';
+  }
+
   var storedItem = localStorage.getItem(title);
   console.log(storedItem);
   if (!storedItem) {
