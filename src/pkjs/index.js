@@ -117,6 +117,7 @@ function processNearbyArticles(articles, isWikidata) {
       longitude: article.lon
     };
     article.distanceAway = haversine(myCoordinates, articleCoordinates, { unit: units });
+    article.isWikidata = isWikidata;
     return article;
   });
 
@@ -132,16 +133,16 @@ function processNearbyArticles(articles, isWikidata) {
   });
   nearestArticle.compassDirection = compassDirection(myCoordinates, nearestArticle);
   console.log(nearestArticle.title);
-  updateNearest(nearestArticle, isWikidata);
+  updateNearest(nearestArticle);
 }
 
 // Add the article to local storage, if it's not there yet.
 // Send the article to Pebble, along with its isNew status.
 // Create a notification if it's new.
-function updateNearest(article, isWikidata) {
+function updateNearest(article) {
   var title = article.title;
-  if (isWikidata) {
-    title += ' (Wikidata)';
+  if (article.isWikidata) {
+    article.title = title + ' (Wikidata)';
   }
 
   var storedItem = localStorage.getItem(title);
