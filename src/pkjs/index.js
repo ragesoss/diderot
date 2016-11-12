@@ -112,6 +112,14 @@ function processNearbyArticles(articles, isWikidata) {
   units = localStorage.getItem('units') || 'km';
 
   articles = articles.map( function(article) {
+    // workaround for Wikidata coordinate bug: https://github.com/Abbe98/articles-by-lat-lon-without-images-service/issues/6
+    if (isWikidata && myCoordinates.latitude < 0) {
+      article.lat = -article.lat;
+    }
+    if (isWikidata && myCoordinates.longitude < 0) {
+      article.lon = -article.lon;
+    }
+  
     var articleCoordinates = {
       latitude: article.lat,
       longitude: article.lon
