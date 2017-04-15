@@ -43,6 +43,7 @@ function locationError(err) {
 }
 function locationSuccess(pos) {
   myCoordinates = pos.coords;
+  // myCoordinates = { latitude: 47.6855766, longitude: -122.2771337 };
   fetchNearbyUnillustrated(myCoordinates.latitude, myCoordinates.longitude);
 }
 function initiateUpdateNearby() {
@@ -67,14 +68,14 @@ function fetchNearbyUnillustrated(latitude, longitude, useWikidata) {
             '&lon=' + longitude +
             '&radius=' + radius +
             '&reencode=true';
-  console.log(url);
+  // console.log(url);
   // url = 'http://tools.wmflabs.org/articles-by-lat-lon-without-images/index.php?wiki=sv&lat=59.06708056&lon=16.36239722&radius=10000&reencode=true';
   var req = new XMLHttpRequest();
   req.open('GET', url, false);
   req.onload = function () {
     if (req.readyState === 4) {
       if (req.status === 200) {
-        console.log(req.responseText);
+        // console.log(req.responseText);
         var response = JSON.parse(req.responseText);
         handleApiResponse(response, latitude, longitude, useWikidata);
       } else {
@@ -121,16 +122,27 @@ function processNearbyArticles(articles, isWikidata) {
     return article;
   });
 
-  nearestArticle = articles[0];
+  nearestArticle = { distanceAway: 1000000, title: 'none' };
   allNearbyArticles = articles;
 
   articles.forEach( function(article) {
+    // We update the nearest article if this article is nearer
+    // unless the article is marked as copyrighted, in which case
+    // we skip it.
+    var copyrighted = false;
     if (article.distanceAway <= nearestArticle.distanceAway) {
-      if (!isCopyrightedWikidata(article, isWikidata)) {
-        nearestArticle = article;
-        // console.log(nearestArticle.title);
-        // console.log(nearestArticle.distanceAway);
+      if (article.isWikidata) {
+        var status = localStorage.getItem(article.title);
+        if (status == 'copyrighted') {
+          console.log(article.title + ' is copyrighted; skipping');
+          copyrighted = true;
+        }
       }
+      if (!copyrighted) {
+        nearestArticle = article;
+      }
+      // console.log(nearestArticle.title);
+      // console.log(nearestArticle.distanceAway);
     }
   });
   nearestArticle.compassDirection = compassDirection(myCoordinates, nearestArticle);
@@ -139,49 +151,76 @@ function processNearbyArticles(articles, isWikidata) {
   updateNearest(nearestArticle);
 }
 
-function isCopyrightedWikidata(article, isWikidata) {
-  console.log('ohai a');
-  if (!isWikidata) { return false; }
+// Inititiate a check of copyright status by:
+// 1. Finding the Wikidata entity for the Wikipedia article
+// 2. Finding the instanceOf properties of the Wikidata entity
+// 3. Marking the article as copyrighted in local storage if it is one of the copyrightable types
+function checkCopyright(article) {
   var storedItem = localStorage.getItem(article.title);
   if (storedItem === 'copyrighted') { return true; }
   
   // get wikibase item from enwiki
-  var wikibaseItemQueryUrl = 'https://en.wikipedia.org/w/api.php?action=query&prop=pageprops&ppprop=wikibase_item&' +
-                             'titles=' + article.title +
-                             '&formatversion=2';
+  // https://en.wikipedia.org/w/api.php?action=query&prop=pageprops&ppprop=wikibase_item&titles=A+Sound+Garden&formatversion=2
+  var wikibaseItemQueryUrl = 'https://en.wikipedia.org/w/api.php?action=query&prop=pageprops&ppprop=wikibase_item' +
+                             '&titles=' + encodeURIComponent(article.title) +
+                             '&formatversion=2&format=json';
   
   var req = new XMLHttpRequest();
+  console.log(wikibaseItemQueryUrl);
   req.open('GET', wikibaseItemQueryUrl, false);
-  console.log('ohai b');
   req.onload = function () {
     if (req.readyState === 4) {
       if (req.status === 200) {
-        console.log(req.responseText);
         var response = JSON.parse(req.responseText);
-        handleWikibaseResponse(response, article);
+        var wikibaseItem = response.query.pages[0].pageprops.wikibase_item;
+        checkWikidataProperties(wikibaseItem, article);
       } else {
         console.log('Error');
       }
     }
   };
-  
-  // get info about item
-  // Return true, while the web requests are going
-  return true;
+  req.send(null);
 }
 
-
-function handleWikibaseResponse(response, article) {
-  console.log('ohai');
-
-  var wikibaseItem = response.query.pages[0].pageprops.wikibase_item;
-  console.log(wikibaseItem);
-  console.log('ohai2');
-  handleWikidataResponse(response, article);
+// Query Wikidata for instanceOf claims so that copyright status
+// can be inferred.
+function checkWikidataProperties(wikibaseItem, article) {
+  // https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=Q3306191
+  var wikidataClaimsUrl = 'https://www.wikidata.org/w/api.php?action=wbgetclaims' +
+                          '&entity=' + wikibaseItem +
+                          '&property=P31' +
+                          '&formatversion=2&format=json';
+  
+  var req = new XMLHttpRequest();
+  console.log(wikidataClaimsUrl);
+  req.open('GET', wikidataClaimsUrl, false);
+  req.onload = function () {
+    if (req.readyState === 4) {
+      if (req.status === 200) {
+        var response = JSON.parse(req.responseText);
+        handleWikidataClaimsResponse(response, article);
+      } else {
+        console.log('Error');
+      }
+    }
+  };
+  req.send(null);
 }
 
-function handleWikidataResponse(response, article) {
-  
+// Set a wikidata article's local storage value to 'copyrighted'
+// if the subject is a type that is likely copyrighted and cannot
+// have a free picture on Commons.
+function handleWikidataClaimsResponse(response, article) {
+  // sculpture = Q860861
+  var sculpture = 'Q860861';
+  // instance of = P31
+  var instanceOf = response.claims.P31;
+  instanceOf.forEach( function (claim) {
+    console.log(claim);
+    if (claim.mainsnak.datavalue.value.id === sculpture) {
+      localStorage.setItem(article.title, 'copyrighted');
+    }
+  });
 }
 
 // Add the article to local storage, if it's not there yet.
@@ -189,15 +228,16 @@ function handleWikidataResponse(response, article) {
 // Create a notification if it's new.
 function updateNearest(article) {
   var title = article.title;
-  if (article.isWikidata) {
-    article.title = title + ' (Wikidata)';
-  }
-
   var storedItem = localStorage.getItem(title);
   console.log(storedItem);
   if (!storedItem) {
-    sendArticleToPebble(article, true);
-    localStorage.setItem(title, 'true');
+    // TODO restore 'new' alerts
+    sendArticleToPebble(article, false);
+    if (article.isWikidata) {
+      checkCopyright(article);
+    } else {
+      localStorage.setItem(title, 'true');
+    }
     Pebble.showSimpleNotificationOnPebble(title, "You're near a new unphotographed place. Go take a picture!");
   } else {
     // console.log('already done!');
@@ -207,14 +247,17 @@ function updateNearest(article) {
 
 // Send an article for the Pebble to display
 function sendArticleToPebble(article) {
-  
+  var title = article.title;
+  if (article.isWikidata) {
+    title += ' (Wikidata)';
+  }
   var unitString = ' km ';
   if (units == 'mile') {
     unitString = ' mi ';
   }
   var distanceString = article.distanceAway.toFixed(1) + unitString + article.compassDirection;
   Pebble.sendAppMessage({
-    ARTICLE: article.title,
+    ARTICLE: title,
     DISTANCE: distanceString
   },
   function(e) {
